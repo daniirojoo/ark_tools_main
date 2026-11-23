@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ARK Tools · Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0f14;
+    --panel:#111a22;
+    --panel-2:#0d151c;
+    --line: rgba(94,225,230,0.28);
+    --line-soft: rgba(94,225,230,0.12);
+    --cyan:#5ce1e6;
+    --cyan-dim:#2f8f96;
+    --amber:#ffb648;
+    --coral:#ff6b6b;
+    --green:#4ee08a;
+    --text:#e7f2f4;
+    --muted:#7d94a0;
+    --radius:2px;
+    font-size:16px;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; min-height:100%;
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(94,225,230,0.08), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(255,182,72,0.05), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', -apple-system, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  h1,h2,h3,.mono,.pcid,.num{ font-family:'Chakra Petch', sans-serif; letter-spacing:0.01em; }
+
+  ::selection{ background:var(--cyan); color:#001014; }
+
+  /* ---------- top bar ---------- */
+  header{
+    position:sticky; top:0; z-index:20;
+    padding: calc(14px + env(safe-area-inset-top,0px)) 16px 12px;
+    background: linear-gradient(180deg, rgba(10,15,20,0.97), rgba(10,15,20,0.9));
+    border-bottom:1px solid var(--line-soft);
+    backdrop-filter: blur(6px);
+    display:flex; align-items:center; gap:10px;
+  }
+  .mark{
+    width:34px; height:34px; flex:none;
+    background: linear-gradient(135deg, var(--cyan), var(--cyan-dim));
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%);
+    display:flex; align-items:center; justify-content:center;
+    color:#04171a; font-weight:700; font-size:15px;
+  }
+  header h1{
+    margin:0; font-size:17px; font-weight:600; color:var(--text);
+    line-height:1.1;
+  }
+  header .sub{ margin:0; font-size:11px; color:var(--muted); letter-spacing:0.03em; }
+  .gear{
+    margin-left:auto; width:38px; height:38px; border-radius:50%;
+    border:1px solid var(--line); background:var(--panel-2); color:var(--cyan);
+    display:flex; align-items:center; justify-content:center; font-size:17px;
+    flex:none; cursor:pointer;
+  }
+  .gear:active{ background:var(--line-soft); }
+
+  /* ---------- tabs ---------- */
+  .tabs{ display:flex; gap:8px; padding:14px 16px 0; }
+  .tab{
+    flex:1; text-align:center; padding:10px 6px; font-size:13.5px; font-weight:600;
+    color:var(--muted); background:var(--panel-2); border:1px solid var(--line-soft);
+    clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
+    cursor:pointer;
+  }
+  .tab.active{ color:#04171a; background:var(--cyan); border-color:var(--cyan); }
+
+  main{ padding:14px 16px 100px; max-width:560px; margin:0 auto; }
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  /* ---------- panel ---------- */
+  .panel{
+    position:relative;
+    background:var(--panel);
+    border:1px solid var(--line-soft);
+    border-left:2px solid var(--cyan-dim);
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+    padding:16px 16px 16px 15px;
+    margin-bottom:14px;
+  }
+  .panel h2{
+    margin:0 0 12px; font-size:13px; font-weight:600; color:var(--cyan);
+    text-transform:uppercase; letter-spacing:0.08em;
+  }
+  .panel p.hint{ margin:-6px 0 12px; font-size:12.5px; color:var(--muted); line-height:1.5; }
+
+  label{ display:block; font-size:12px; color:var(--muted); margin:10px 0 5px; }
+  label:first-child{ margin-top:0; }
+  input[type=text], input[type=number], input[type=password], input[type=url]{
+    width:100%; background:var(--panel-2); border:1px solid var(--line-soft);
+    color:var(--text); padding:11px 12px; font-size:15px; border-radius:var(--radius);
+    font-family:'Inter', sans-serif;
+  }
+  input:focus{ outline:none; border-color:var(--cyan); }
+  .row{ display:flex; gap:10px; }
+  .row > div{ flex:1; }
+  .check{ display:flex; align-items:center; gap:8px; margin:12px 0 0; font-size:14px; color:var(--text); }
+  .check input{ width:18px; height:18px; accent-color:var(--cyan); }
+
+  button{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:14.5px;
+    border:none; cursor:pointer; padding:12px 16px; border-radius:var(--radius);
+  }
+  .btn-primary{ background:var(--cyan); color:#04171a; width:100%; margin-top:14px; }
+  .btn-primary:active{ background:#4bc9ce; }
+  .btn-ghost{ background:transparent; border:1px solid var(--line); color:var(--cyan); }
+  .btn-danger{ background:transparent; border:1px solid rgba(255,107,107,0.4); color:var(--coral); }
+  .btn-row{ display:flex; gap:10px; margin-top:14px; }
+  .btn-row button{ flex:1; }
+
+  .status-line{ font-size:12.5px; color:var(--muted); margin-top:10px; min-height:16px; }
+  .status-line.ok{ color:var(--green); }
+  .status-line.err{ color:var(--coral); }
+
+  /* ---------- client cards ---------- */
+  .client{
+    display:flex; align-items:stretch; gap:0; margin-bottom:10px;
+    background:var(--panel); border:1px solid var(--line-soft);
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+  }
+  .client .bar{ width:4px; flex:none; }
+  .bar.on{ background:var(--green); }
+  .bar.warn{ background:var(--amber); }
+  .bar.off{ background:var(--coral); }
+  .client .body{ flex:1; padding:12px 14px; min-width:0; }
+  .client .top{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+  .client .pcid{ font-size:16px; font-weight:600; color:var(--text); }
+  .client .days{ font-size:12.5px; color:var(--muted); white-space:nowrap; }
+  .client .days.warn{ color:var(--amber); }
+  .client .days.off{ color:var(--coral); }
+  .client .nota{ font-size:12.5px; color:var(--muted); margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .client .actions{ display:flex; flex-direction:column; border-left:1px solid var(--line-soft); }
+  .client .actions button{
+    flex:1; background:none; border:none; color:var(--muted); font-size:16px;
+    padding:0 14px; border-bottom:1px solid var(--line-soft);
+  }
+  .client .actions button:last-child{ border-bottom:none; color:var(--coral); }
+  .client .actions button:active{ background:var(--line-soft); }
+
+  .empty{ text-align:center; padding:36px 20px; color:var(--muted); font-size:13.5px; }
+
+  .fab{
+    position:fixed; right:18px; bottom:calc(20px + env(safe-area-inset-bottom,0px));
+    width:56px; height:56px; background:var(--cyan); color:#04171a;
+    display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:600;
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%);
+    box-shadow:0 6px 18px rgba(0,0,0,0.4); z-index:15; border:none; cursor:pointer;
+  }
+
+  /* ---------- sheet / modal ---------- */
+  .sheet-bg{
+    position:fixed; inset:0; background:rgba(3,6,9,0.72); z-index:30;
+    display:none; align-items:flex-end;
+  }
+  .sheet-bg.show{ display:flex; }
+  .sheet{
+    width:100%; max-height:88vh; overflow-y:auto;
+    background:var(--panel); border-top:1px solid var(--line);
+    padding:18px 18px calc(22px + env(safe-area-inset-bottom,0px));
+  }
+  .sheet h2{ margin:0 0 14px; font-size:15px; color:var(--cyan); }
+  .sheet-close{
+    display:flex; justify-content:flex-end; margin-bottom:-6px;
+  }
+  .sheet-close button{ background:none; border:none; color:var(--muted); font-size:22px; padding:4px 8px; }
+
+  a{ color:var(--cyan); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark">A</div>
+  <div>
+    <h1>ARK Tools</h1>
+    <p class="sub">PANEL DE ADMINISTRACIÓN</p>
+  </div>
+  <button class="gear" id="btnSettings" aria-label="Ajustes de conexión">⚙</button>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-view="clients">Clientes</div>
+  <div class="tab" data-view="update">Actualizar</div>
+</div>
+
+<main>
+
+  <!-- ===================== CLIENTES ===================== -->
+  <div class="view active" id="view-clients">
+    <div class="panel">
+      <h2>Clientes</h2>
+      <p class="hint">PC ID, días restantes y estado de cada persona con acceso.</p>
+      <div id="clientList"></div>
+      <div class="status-line" id="clientsStatus"></div>
+    </div>
+  </div>
+
+  <!-- ===================== ACTUALIZAR ===================== -->
+  <div class="view" id="view-update">
+    <div class="panel">
+      <h2>Publicar actualización</h2>
+      <p class="hint">1) Sube ArkTools.exe como asset de una GitHub Release.<br>2) Pega aquí la versión (la misma que CURRENT_VERSION) y la URL de descarga directa.<br>Los clientes solo se actualizan si la versión es MAYOR que la que tienen.</p>
+      <label for="verInput">Versión</label>
+      <input type="text" id="verInput" placeholder="1.0.1">
+      <label for="urlInput">URL de descarga directa</label>
+      <input type="url" id="urlInput" placeholder="https://github.com/daniirojoo/ark_tools_main/releases/download/py-v1.0.1/ArkTools.exe">
+      <button class="btn-primary" id="btnPublish">Publicar actualización</button>
+      <div class="status-line" id="updateStatus"></div>
+    </div>
+  </div>
+
+</main>
+
+<button class="fab" id="btnAdd" aria-label="Añadir cliente">+</button>
+
+<!-- ===================== SHEET: SETTINGS ===================== -->
+<div class="sheet-bg" id="sheetSettings">
+  <div class="sheet">
+    <div class="sheet-close"><button data-close>✕</button></div>
+    <h2>Conexión (GitHub)</h2>
+    <p class="hint">Se guardan SOLO en este móvil (no se envían a ningún sitio salvo a tu GitHub).</p>
+    <label for="tokenInput">Token de GitHub (permiso Contents: write)</label>
+    <input type="password" id="tokenInput" autocomplete="off" placeholder="github_pat_...">
+    <label for="privKeyInput">Clave privada Ed25519 (la misma del PC)</label>
+    <input type="password" id="privKeyInput" autocomplete="off" placeholder="64 caracteres hex">
+    <button class="btn-primary" id="btnSaveSettings">Guardar y cargar clientes</button>
+    <div class="status-line" id="settingsStatus"></div>
+  </div>
+</div>
+
+<!-- ===================== SHEET: ADD/EDIT CLIENT ===================== -->
+<div class="sheet-bg" id="sheetClient">
+  <div class="sheet">
+    <div class="sheet-close"><button data-close>✕</button></div>
+    <h2 id="clientFormTitle">Añadir cliente</h2>
+    <input type="hidden" id="editingPcid" value="">
+    <div class="row">
+      <div>
+        <label for="pcidInput">PC ID</label>
+        <input type="text" id="pcidInput" maxlength="16" autocapitalize="characters" placeholder="p. ej. A3F9C1D2">
+      </div>
+      <div>
+        <label for="daysInput">Días</label>
+        <input type="number" id="daysInput" min="1" value="30">
+      </div>
+    </div>
+    <label class="check"><input type="checkbox" id="infiniteInput"> Acceso infinito</label>
+    <label for="notaInput">Nota (opcional)</label>
+    <input type="text" id="notaInput" placeholder="Nombre de la persona, por ejemplo">
+    <label class="check"><input type="checkbox" id="activeInput" checked> Activo</label>
+    <div class="btn-row">
+      <button class="btn-primary" id="btnSaveClient" style="margin-top:0">Guardar</button>
+    </div>
+    <div class="status-line" id="clientFormStatus"></div>
+  </div>
+</div>
+
+<!-- tweetnacl: firma Ed25519 en el navegador (la asimétrica de las licencias) -->
+<script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl.min.js"></script>
+<script>
+const LS_KEY = 'arktools_admin_gh_v1';
+// Repo PÚBLICO con los datos que leen los clientes (NO es secreto). El TOKEN y la
+// CLAVE PRIVADA se escriben en ⚙ y se guardan SOLO en este navegador: por eso
+// este HTML se puede publicar en una web (GitHub Pages) sin filtrar nada.
+const GITHUB_OWNER = 'daniirojoo';
+const GITHUB_REPO = 'ark_tools_main';
+const GITHUB_BRANCH = 'main';
+const CLIENTS_PATH = 'clientes.txt';   // lista FIRMADA de clientes
+const UPDATE_PATH = 'update.txt';      // "version|url_de_descarga_directa_del_.exe"
+const ED_MARKER = ';@ED=';
+
+function loadSettings(){
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; }
+  catch { return {}; }
+}
+function saveSettingsLocal(s){ localStorage.setItem(LS_KEY, JSON.stringify(s)); }
+
+let settings = loadSettings();
+
+// ---------------- GitHub helpers ----------------
+function apiUrl(path){ return `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`; }
+function ghHeaders(){
+  return { 'Authorization': 'Bearer ' + (settings.token || ''),
+           'Accept': 'application/vnd.github+json',
+           'X-GitHub-Api-Version': '2022-11-28' };
+}
+function utf8ToB64(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin = ''; for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+function b64ToUtf8(b64){
+  const bin = atob((b64 || '').replace(/\s/g, ''));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+async function ghRead(path){
+  const res = await fetch(apiUrl(path), { headers: ghHeaders(), cache: 'no-store' });
+  if (res.status === 404) return { text: '', sha: null };
+  if (!res.ok) throw new Error('GET ' + res.status);
+  const j = await res.json();
+  return { text: b64ToUtf8(j.content).trim(), sha: j.sha };
+}
+async function ghWrite(path, text, message){
+  const cur = await ghRead(path);   // el sha actual hace falta para sobrescribir
+  const body = { message: message, content: utf8ToB64(text), branch: GITHUB_BRANCH };
+  if (cur.sha) body.sha = cur.sha;
+  const res = await fetch(apiUrl(path), {
+    method: 'PUT',
+    headers: Object.assign({ 'Content-Type': 'application/json' }, ghHeaders()),
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error('PUT ' + res.status);
+  return true;
+}
+
+// ---------------- parse / serialize (mismo formato que admin_panel.py) ----------------
+// "pcid|expiryUnix|infinite(0/1)|active(0/1)|nota;pcid|...;...;@ED=<firma>"
+function parseClients(raw){
+  if (!raw) return [];
+  return raw.split(';').map(e => e.trim()).filter(Boolean).map(entry => {
+    const p = entry.split('|');
+    return { pcid: p[0], expiry: p[1], infinite: p[2], active: p[3], nota: p[4] || '' };
+  }).filter(c => c.pcid !== undefined && c.expiry !== undefined);   // ignora "@ED=..."
+}
+function serializeClients(list){
+  return list.map(c => [c.pcid, c.expiry, c.infinite, c.active, c.nota].join('|')).join(';');
+}
+// La lista se guarda FIRMADA (Ed25519) con la CLAVE PRIVADA (la escribes en ⚙ y
+// se queda solo en este móvil); el ArkTools.exe la verifica con la PÚBLICA.
+function hexToBytes(hex){
+  const a = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < a.length; i++) a[i] = parseInt(hex.substr(i * 2, 2), 16);
+  return a;
+}
+function toHex(bytes){
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function signEd(body){
+  // Ed25519 con tweetnacl: de la semilla (32 bytes) saca el par de claves y firma.
+  const kp = nacl.sign.keyPair.fromSeed(hexToBytes(settings.privateKey));
+  return toHex(nacl.sign.detached(new TextEncoder().encode(body), kp.secretKey));
+}
+function signedClients(list){
+  const body = serializeClients(list);
+  return body + ED_MARKER + signEd(body);
+}
+function daysLeft(expiryUnixStr){
+  const expiry = parseInt(expiryUnixStr, 10);
+  const now = Math.floor(Date.now() / 1000);
+  return Math.ceil((expiry - now) / 86400);
+}
+
+// ---------------- UI: tabs ----------------
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('view-' + tab.dataset.view).classList.add('active');
+  });
+});
+
+// ---------------- UI: sheets ----------------
+function openSheet(id){ document.getElementById(id).classList.add('show'); }
+function closeSheet(id){ document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('[data-close]').forEach(btn => {
+  btn.addEventListener('click', () => btn.closest('.sheet-bg').classList.remove('show'));
+});
+
+document.getElementById('btnSettings').addEventListener('click', () => {
+  document.getElementById('tokenInput').value = settings.token || '';
+  document.getElementById('privKeyInput').value = settings.privateKey || '';
+  openSheet('sheetSettings');
+});
+
+document.getElementById('btnSaveSettings').addEventListener('click', async () => {
+  settings.token = document.getElementById('tokenInput').value.trim();
+  settings.privateKey = document.getElementById('privKeyInput').value.trim().toLowerCase();
+  saveSettingsLocal(settings);
+  const st = document.getElementById('settingsStatus');
+  if (!settings.token || !/^[0-9a-f]{64}$/.test(settings.privateKey)){
+    st.textContent = 'Pon el token de GitHub y la clave privada (64 caracteres hex).';
+    st.className = 'status-line err';
+    return;
+  }
+  st.textContent = 'Guardado. Cargando clientes...';
+  st.className = 'status-line';
+  closeSheet('sheetSettings');
+  await refreshClients();
+});
+
+// ---------------- clientes: listar ----------------
+async function refreshClients(){
+  const listEl = document.getElementById('clientList');
+  const statusEl = document.getElementById('clientsStatus');
+  if (!settings.token || !settings.privateKey){
+    listEl.innerHTML = '';
+    statusEl.textContent = 'Configura la conexión (⚙ arriba) para ver los clientes.';
+    statusEl.className = 'status-line';
+    return;
+  }
+  statusEl.textContent = 'Cargando...';
+  statusEl.className = 'status-line';
+  try {
+    const { text } = await ghRead(CLIENTS_PATH);
+    const clients = parseClients(text);
+    renderClients(clients);
+    statusEl.textContent = clients.length + ' cliente(s) cargados';
+    statusEl.className = 'status-line ok';
+  } catch (e) {
+    listEl.innerHTML = '';
+    statusEl.textContent = 'No se pudo cargar. Revisa el token / la conexión.';
+    statusEl.className = 'status-line err';
+  }
+}
+
+function renderClients(clients){
+  const listEl = document.getElementById('clientList');
+  if (clients.length === 0){
+    listEl.innerHTML = '<div class="empty">Todavía no hay clientes.<br>Pulsa el botón + para añadir el primero.</div>';
+    return;
+  }
+  listEl.innerHTML = clients.map(c => {
+    const isInfinite = c.infinite === '1';
+    const isActive = c.active === '1';
+    const dl = isInfinite ? null : daysLeft(c.expiry);
+    let barClass = 'off', daysText = 'Inactivo', daysClass = 'off';
+    if (isActive){
+      if (isInfinite){ barClass = 'on'; daysText = 'Ilimitado'; daysClass = ''; }
+      else if (dl < 0){ barClass = 'off'; daysText = 'Caducado'; daysClass = 'off'; }
+      else if (dl <= 3){ barClass = 'warn'; daysText = dl + ' día(s)'; daysClass = 'warn'; }
+      else { barClass = 'on'; daysText = dl + ' días'; daysClass = ''; }
+    }
+    return `
+      <div class="client">
+        <div class="bar ${barClass}"></div>
+        <div class="body">
+          <div class="top">
+            <span class="pcid">PC ${c.pcid}</span>
+            <span class="days ${daysClass}">${daysText}</span>
+          </div>
+          ${c.nota ? `<div class="nota">${escapeHtml(c.nota)}</div>` : ''}
+        </div>
+        <div class="actions">
+          <button data-edit="${c.pcid}">✎</button>
+          <button data-del="${c.pcid}">🗑</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  listEl.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => openEdit(b.dataset.edit, clients)));
+  listEl.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => deleteClient(b.dataset.del)));
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// ---------------- clientes: añadir/editar ----------------
+document.getElementById('btnAdd').addEventListener('click', () => {
+  editingOriginal = null;
+  document.getElementById('clientFormTitle').textContent = 'Añadir cliente';
+  document.getElementById('editingPcid').value = '';
+  document.getElementById('pcidInput').value = '';
+  document.getElementById('pcidInput').disabled = false;
+  document.getElementById('daysInput').value = 30;
+  document.getElementById('infiniteInput').checked = false;
+  document.getElementById('daysInput').disabled = false;
+  document.getElementById('notaInput').value = '';
+  document.getElementById('activeInput').checked = true;
+  document.getElementById('clientFormStatus').textContent = '';
+  openSheet('sheetClient');
+});
+
+// Cliente abierto con ✎: si no se tocan los días, conserva su fecha exacta.
+let editingOriginal = null;
+
+function openEdit(pcid, clients){
+  const c = clients.find(x => x.pcid === pcid);
+  if (!c) return;
+  const shownDays = c.infinite === '1' ? 30 : Math.max(1, daysLeft(c.expiry));
+  editingOriginal = { expiry: c.expiry, infinite: c.infinite === '1', days: shownDays };
+  document.getElementById('clientFormTitle').textContent = 'Editar cliente ' + pcid;
+  document.getElementById('editingPcid').value = pcid;
+  document.getElementById('pcidInput').value = pcid;
+  document.getElementById('pcidInput').disabled = true;
+  document.getElementById('infiniteInput').checked = c.infinite === '1';
+  document.getElementById('daysInput').disabled = c.infinite === '1';
+  document.getElementById('daysInput').value = shownDays;
+  document.getElementById('notaInput').value = c.nota || '';
+  document.getElementById('activeInput').checked = c.active === '1';
+  document.getElementById('clientFormStatus').textContent = '';
+  openSheet('sheetClient');
+}
+
+document.getElementById('infiniteInput').addEventListener('change', (e) => {
+  document.getElementById('daysInput').disabled = e.target.checked;
+});
+
+document.getElementById('btnSaveClient').addEventListener('click', async () => {
+  const st = document.getElementById('clientFormStatus');
+  let pcid = document.getElementById('pcidInput').value.trim().toUpperCase();
+  if (/^\d+$/.test(pcid)) pcid = String(parseInt(pcid, 10));   // el antiguo: sin ceros a la izquierda
+  const editing = document.getElementById('editingPcid').value;
+  const infinite = document.getElementById('infiniteInput').checked;
+  const active = document.getElementById('activeInput').checked;
+  const nota = document.getElementById('notaInput').value.replace(/[|;"\\]/g, '');
+
+  // Vale el ID nuevo (8 caracteres, letras y números) y el antiguo (0-999).
+  if (!/^[A-Z0-9]+$/.test(pcid)){
+    st.textContent = 'PC ID inválido: solo letras y números (nuevo: 8 caracteres, p. ej. A3F9C1D2).';
+    st.className = 'status-line err';
+    return;
+  }
+
+  let expiry;
+  if (infinite){
+    expiry = '9999999999999';
+  } else {
+    const days = parseInt(document.getElementById('daysInput').value, 10);
+    if (!days || days <= 0){
+      st.textContent = 'Los días deben ser mayores que 0.';
+      st.className = 'status-line err';
+      return;
+    }
+    const keep = editing === pcid && editingOriginal && !editingOriginal.infinite
+      && days === editingOriginal.days && parseInt(editingOriginal.expiry, 10) > Date.now() / 1000;
+    expiry = keep ? editingOriginal.expiry : String(Math.floor(Date.now() / 1000) + days * 86400);
+  }
+
+  st.textContent = 'Guardando...';
+  st.className = 'status-line';
+  try {
+    const { text } = await ghRead(CLIENTS_PATH);
+    let clients = parseClients(text);
+    const record = { pcid, expiry, infinite: infinite ? '1' : '0', active: active ? '1' : '0', nota };
+    const idx = clients.findIndex(c => c.pcid === pcid);
+    if (idx >= 0 && editing !== pcid) {
+      const other = clients[idx];
+      if (!confirm(`El PC ID ${pcid} ya está en la lista${other.nota ? ' (' + other.nota + ')' : ''}.\n\nSi guardas, se SOBRESCRIBE ese cliente. ¿Seguir?`)) {
+        st.textContent = 'Cancelado.';
+        return;
+      }
+    }
+    if (idx >= 0) clients[idx] = record; else clients.push(record);
+    await ghWrite(CLIENTS_PATH, signedClients(clients), 'Actualizar lista de clientes');
+    closeSheet('sheetClient');
+    await refreshClients();
+  } catch (e) {
+    st.textContent = 'No se pudo guardar en GitHub (revisa el token).';
+    st.className = 'status-line err';
+  }
+});
+
+async function deleteClient(pcid){
+  if (!confirm(`¿Eliminar el acceso del PC ID ${pcid}?`)) return;
+  const statusEl = document.getElementById('clientsStatus');
+  statusEl.textContent = 'Eliminando...';
+  statusEl.className = 'status-line';
+  try {
+    const { text } = await ghRead(CLIENTS_PATH);
+    const clients = parseClients(text).filter(c => c.pcid !== pcid);
+    await ghWrite(CLIENTS_PATH, signedClients(clients), 'Eliminar cliente ' + pcid);
+    await refreshClients();
+  } catch (e) {
+    statusEl.textContent = 'No se pudo eliminar.';
+    statusEl.className = 'status-line err';
+  }
+}
+
+// ---------------- publicar actualización ----------------
+document.getElementById('btnPublish').addEventListener('click', async () => {
+  const st = document.getElementById('updateStatus');
+  const version = document.getElementById('verInput').value.trim();
+  const url = document.getElementById('urlInput').value.trim();
+
+  if (!version){
+    st.textContent = 'Escribe un número de versión (ej: 1.4.1).'; st.className = 'status-line err'; return;
+  }
+  if (version.includes('|')){
+    st.textContent = "El número de versión no puede contener '|'."; st.className = 'status-line err'; return;
+  }
+  if (!/^https?:\/\//.test(url)){
+    st.textContent = 'Pega una URL de descarga directa válida (http:// o https://).'; st.className = 'status-line err'; return;
+  }
+  if (url.includes('"') || url.includes('|')){
+    st.textContent = "La URL no puede contener comillas ni '|'."; st.className = 'status-line err'; return;
+  }
+  if (!settings.token){
+    st.textContent = 'Configura el token de GitHub (⚙).'; st.className = 'status-line err'; return;
+  }
+
+  st.textContent = 'Publicando...';
+  st.className = 'status-line';
+  try {
+    await ghWrite(UPDATE_PATH, `${version}|${url}`, 'Publicar v' + version);
+    st.textContent = `✔ Publicado v${version}`;
+    st.className = 'status-line ok';
+  } catch (e) {
+    st.textContent = 'No se pudo publicar (revisa el token).';
+    st.className = 'status-line err';
+  }
+});
+
+// ---------------- arranque ----------------
+if (settings.token && settings.privateKey){
+  refreshClients();
+} else {
+  document.getElementById('clientsStatus').textContent = 'Configura la conexión (⚙ arriba) para empezar.';
+}
+</script>
+
+</body>
+</html>
